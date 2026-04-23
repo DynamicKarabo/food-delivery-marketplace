@@ -1,0 +1,30 @@
+{
+  "name": "food-delivery-marketplace",
+  "version": "1.0.0",
+  "description": "A complete food delivery marketplace built with the Agentic Era workflow",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:customer\" \"npm run dev:restaurant\" \"npm run dev:driver\" \"npm run dev:order\" \"npm run dev:frontend\"",
+    "dev:customer": "npm run dev --workspace=packages/customer-service",
+    "dev:restaurant": "npm run dev --workspace=packages/restaurant-service",
+    "dev:driver": "npm run dev --workspace=packages/driver-service",
+    "dev:order": "npm run dev --workspace=packages/order-service",
+    "dev:frontend": "npm run dev --workspace=packages/frontend",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "docker": "docker-compose up -d",
+    "docker:dev": "docker-compose up"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

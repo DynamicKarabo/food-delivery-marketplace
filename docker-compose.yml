@@ -1,0 +1,200 @@
+version: '3.8'
+
+services:
+  # Databases
+  postgres:
+    image: postgres:16-alpine
+    container_name: food-delivery-postgres
+    environment:
+      POSTGRES_USER: fooddelivery
+      POSTGRES_PASSWORD: fooddelivery123
+      POSTGRES_DB: fooddelivery
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - food-delivery-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: food-delivery-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - food-delivery-network
+
+  # Zookeeper & Kafka for event streaming
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - food-delivery-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: food-delivery-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - food-delivery-network
+
+  # Microservices
+  customer-service:
+    build:
+      context: ./packages/customer-service
+      dockerfile: Dockerfile
+    container_name: food-delivery-customer
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://fooddelivery:fooddelivery123@postgres:5432/fooddelivery
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-secret-key-change-in-production
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - food-delivery-network
+    volumes:
+      - ./packages/customer-service:/app
+      - /app/node_modules
+
+  restaurant-service:
+    build:
+      context: ./packages/restaurant-service
+      dockerfile: Dockerfile
+    container_name: food-delivery-restaurant
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://fooddelivery:fooddelivery123@postgres:5432/fooddelivery
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-secret-key-change-in-production
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - food-delivery-network
+    volumes:
+      - ./packages/restaurant-service:/app
+      - /app/node_modules
+
+  driver-service:
+    build:
+      context: ./packages/driver-service
+      dockerfile: Dockerfile
+    container_name: food-delivery-driver
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://fooddelivery:fooddelivery123@postgres:5432/fooddelivery
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-secret-key-change-in-production
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - food-delivery-network
+    volumes:
+      - ./packages/driver-service:/app
+      - /app/node_modules
+
+  order-service:
+    build:
+      context: ./packages/order-service
+      dockerfile: Dockerfile
+    container_name: food-delivery-order
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://fooddelivery:fooddelivery123@postgres:5432/fooddelivery
+      - REDIS_URL=redis://redis:6379
+      - STRIPE_SECRET_KEY=sk_test_your_stripe_secret
+      - STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+      - JWT_SECRET=your-secret-key-change-in-production
+      - KAFKA_BROKERS=kafka:9092
+      - NOTIFICATION_SERVICE_URL=http://customer-service:3001
+      - RESTAURANT_SERVICE_URL=http://restaurant-service:3002
+      - DRIVER_SERVICE_URL=http://driver-service:3003
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - customer-service
+      - restaurant-service
+      - driver-service
+    networks:
+      - food-delivery-network
+    volumes:
+      - ./packages/order-service:/app
+      - /app/node_modules
+
+  # Frontend
+  frontend:
+    build:
+      context: ./packages/frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3004
+    container_name: food-delivery-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3004
+      - VITE_STRIPE_PUBLIC_KEY=pk_test_your_stripe_public
+    depends_on:
+      - order-service
+      - customer-service
+    networks:
+      - food-delivery-network
+    volumes:
+      - ./packages/frontend:/app
+      - /app/node_modules
+      - /app/.vite
+
+  # Nginx Reverse Proxy (production)
+  nginx:
+    image: nginx:alpine
+    container_name: food-delivery-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - customer-service
+      - restaurant-service
+      - driver-service
+      - order-service
+    networks:
+      - food-delivery-network
+
+volumes:
+  postgres_data:
+
+networks:
+  food-delivery-network:
+    driver: bridge
