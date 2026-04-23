@@ -48,7 +48,16 @@ jobs:
 
     - name: Install dependencies
       run: npm install
-      
+
+    - name: Generate Prisma clients
+      run: |
+        cd packages/customer-service && npx prisma generate
+        cd ../restaurant-service && npx prisma generate
+        cd ../driver-service && npx prisma generate
+        cd ../order-service && npx prisma generate
+      env:
+        DATABASE_URL: postgresql://postgres:test@localhost:5432/fooddelivery
+
     - name: Build TypeScript
       run: npm run build --workspaces --if-present
       env:
