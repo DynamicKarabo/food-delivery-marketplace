@@ -1,6 +1,6 @@
 # 🍔 Food Delivery Marketplace
 
-A complete food delivery marketplace built with the **Agentic Era** workflow — designed by AI, built by AI, deployed autonomously.
+A complete food delivery marketplace built with the **Agentic** workflow — designed by AI, built by AI, deployed autonomously.
 
 ## 🏗️ Architecture
 
