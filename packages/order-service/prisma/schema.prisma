@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id                    String        @id @default(uuid())
+  customerId            String
+  restaurantId          String
+  driverId              String?
+  status                OrderStatus   @default(PENDING)
+  deliveryAddress       Json
+  deliveryInstructions  String?
+  subtotal              Float
+  deliveryFee           Float
+  tax                   Float
+  total                 Float
+  paymentStatus         PaymentStatus @default(PENDING)
+  paymentIntentId       String?
+  stripePaymentIntentId String?
+  estimatedDeliveryTime DateTime?
+  actualDeliveryTime    DateTime?
+  cancellationReason    String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String  @id @default(uuid())
+  orderId         String
+  order           Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId      String
+  menuItemName    String
+  quantity        Int
+  unitPrice       Float
+  totalPrice      Float
+  selectedOptions Json?
+
+  @@map("order_items")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  ASSIGNED_TO_DRIVER
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}

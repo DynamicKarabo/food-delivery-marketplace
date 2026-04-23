@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Driver {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  vehicleMake     String
+  vehicleModel    String
+  vehicleYear     Int
+  vehicleColor    String
+  licensePlate    String
+  vehicleType     VehicleType @default(CAR)
+  isAvailable     Boolean  @default(false)
+  isVerified      Boolean  @default(false)
+  totalDeliveries Int      @default(0)
+  averageRating   Float    @default(0)
+  currentLat      Float?
+  currentLng      Float?
+  lastLocationAt  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  deliveries Delivery[]
+
+  @@map("drivers")
+}
+
+model Delivery {
+  id        String   @id @default(uuid())
+  driverId  String
+  driver    Driver   @relation(fields: [driverId], references: [id])
+  orderId   String   @unique
+  status    DeliveryStatus @default(PENDING)
+  pickupLat Float?
+  pickupLng Float?
+  dropoffLat Float?
+  dropoffLng Float?
+  estimatedTime Int?  // minutes
+  actualTime    Int?
+  earnings      Float @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("deliveries")
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  CAR
+  BICYCLE
+  SCOOTER
+}
+
+enum DeliveryStatus {
+  PENDING
+  ACCEPTED
+  PICKED_UP
+  IN_PROGRESS
+  NEARBY
+  DELIVERED
+  CANCELLED
+}

@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: fooddelivery
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint
+      run: npm run lint --workspaces --if-present
+
+    - name: Build TypeScript
+      run: npm run build --workspaces --if-present
+
+    - name: Run tests
+      run: npm test --workspaces --if-present
+      env:
+        DATABASE_URL: postgresql://postgres:test@localhost:5432/fooddelivery
+        REDIS_URL: redis://localhost:6379
+        JWT_SECRET: test-secret
+        NODE_ENV: test
+
+  build-and-push:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Customer Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./packages/customer-service
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-customer:${{ github.sha }}
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-customer:latest
+
+    - name: Build and push Restaurant Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./packages/restaurant-service
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-restaurant:${{ github.sha }}
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-restaurant:latest
+
+    - name: Build and push Driver Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./packages/driver-service
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-driver:${{ github.sha }}
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-driver:latest
+
+    - name: Build and push Order Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./packages/order-service
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-order:${{ github.sha }}
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-order:latest
+
+    - name: Build and push Frontend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./packages/frontend
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-frontend:${{ github.sha }}
+          ${{ secrets.DOCKER_USERNAME }}/food-delivery-frontend:latest

@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id          String   @id @default(uuid())
+  ownerId     String
+  name        String
+  description String?
+  street      String
+  city        String
+  state       String
+  country     String  @default("US")
+  zipCode     String
+  latitude    Float?
+  longitude   Float?
+  phone       String
+  email       String
+  cuisineTypes String[]
+  isActive    Boolean @default(true)
+  isVerified  Boolean @default(false)
+  rating      Float   @default(0)
+  totalReviews Int    @default(0)
+  deliveryFee Float   @default(0)
+  minOrderAmount Float @default(0)
+  estimatedDeliveryTime Int @default(30)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  openingHours OpeningHour[]
+  menuItems    MenuItem[]
+  orders       Order[]
+
+  @@map("restaurants")
+}
+
+model OpeningHour {
+  id        String   @id @default(uuid())
+  restaurantId String
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  dayOfWeek Int      // 0-6 (Sunday-Saturday)
+  openTime  String   // "09:00"
+  closeTime String   // "22:00"
+  isClosed  Boolean @default(false)
+
+  @@map("opening_hours")
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  restaurantId String
+  restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Float
+  category    String
+  imageUrl    String?
+  isAvailable Boolean @default(true)
+  preparationTime Int @default(15)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  options MenuOption[]
+
+  @@map("menu_items")
+}
+
+model MenuOption {
+  id        String   @id @default(uuid())
+  menuItemId String
+  menuItem  MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  name      String
+  choices   OptionChoice[]
+
+  @@map("menu_options")
+}
+
+model OptionChoice {
+  id            String   @id @default(uuid())
+  optionId      String
+  option        MenuOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  name          String
+  priceModifier Float   @default(0)
+
+  @@map("option_choices")
+}
+
+model Order {
+  id           String   @id @default(uuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  status       OrderStatus @default(PENDING)
+  total        Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  ASSIGNED_TO_DRIVER
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}

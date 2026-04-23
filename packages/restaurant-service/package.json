@@ -1,0 +1,35 @@
+{
+  "name": "@food-delivery/restaurant-service",
+  "version": "1.0.0",
+  "description": "Restaurant management service for food delivery marketplace",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "joi": "^17.11.0",
+    "pg": "^8.11.0",
+    "prisma": "^5.7.0",
+    "@prisma/client": "^5.7.0",
+    "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/express": "^4.17.0",
+    "@types/cors": "^2.8.0",
+    "@types/morgan": "^1.9.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.0"
+  }
+}

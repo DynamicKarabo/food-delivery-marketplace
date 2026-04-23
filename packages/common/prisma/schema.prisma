@@ -1,0 +1,191 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  RESTAURANT_OWNER
+  DRIVER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY_FOR_PICKUP
+  DRIVER_ASSIGNED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum VehicleType {
+  BICYCLE
+  MOTORCYCLE
+  CAR
+  VAN
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         UserRole  @default(CUSTOMER)
+  avatar       String?
+  isVerified   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  addresses    Address[]
+  orders       Order[]
+  favorites    Favorite[]
+  restaurant   Restaurant?
+  driver       Driver?
+}
+
+model Restaurant {
+  id                    String    @id @default(uuid())
+  ownerId               String    @unique
+  owner                 User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name                  String
+  description           String?
+  address               Json
+  contact               Json
+  cuisineTypes          String[]
+  openingHours          Json[]
+  isActive              Boolean   @default(true)
+  rating                Float     @default(0.0)
+  deliveryFee           Float     @default(0.0)
+  minOrderAmount        Float     @default(0.0)
+  estimatedDeliveryTime Int       @default(30)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  menuItems             MenuItem[]
+  orders                Order[]
+}
+
+model MenuItem {
+  id              String      @id @default(uuid())
+  restaurantId    String
+  restaurant      Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  price           Float
+  category        String
+  imageUrl        String?
+  isAvailable     Boolean     @default(true)
+  preparationTime Int         @default(15)
+  options         Json[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Order {
+  id                    String        @id @default(uuid())
+  customerId            String
+  customer              User          @relation(fields: [customerId], references: [id])
+  restaurantId          String
+  restaurant            Restaurant    @relation(fields: [restaurantId], references: [id])
+  driverId              String?
+  driver                Driver?       @relation(fields: [driverId], references: [id])
+  items                 Json[]
+  status                OrderStatus   @default(PENDING)
+  deliveryAddress       Json
+  deliveryInstructions  String?
+  subtotal              Float
+  deliveryFee           Float
+  tax                   Float
+  total                 Float
+  paymentStatus         PaymentStatus @default(PENDING)
+  paymentIntentId       String?
+  estimatedDeliveryTime DateTime?
+  actualDeliveryTime    DateTime?
+  cancellationReason    String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  orderItems            OrderItem[]
+  reviews               Review[]
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId      String
+  menuItemName    String
+  quantity        Int
+  unitPrice       Float
+  totalPrice      Float
+  selectedOptions Json[]
+}
+
+model Driver {
+  id              String      @id @default(uuid())
+  userId          String      @unique
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle         Json
+  isAvailable     Boolean     @default(false)
+  currentLocation Json?
+  totalDeliveries Int         @default(0)
+  averageRating   Float       @default(0.0)
+  isVerified      Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  orders          Order[]
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  reviewerId  String
+  revieweeId  String
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  street    String
+  city      String
+  state     String
+  country   String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  isDefault Boolean  @default(false)
+}
+
+model Favorite {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurantId String
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, restaurantId])
+}
