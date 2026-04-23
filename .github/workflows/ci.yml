@@ -74,64 +74,32 @@ jobs:
         JWT_SECRET: test-secret
         NODE_ENV: test
 
-  build-and-push:
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Build and push Customer Service
-      uses: docker/build-push-action@v5
-      with:
-        context: ./packages/customer-service
-        push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-customer:${{ github.sha }}
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-customer:latest
-
-    - name: Build and push Restaurant Service
-      uses: docker/build-push-action@v5
-      with:
-        context: ./packages/restaurant-service
-        push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-restaurant:${{ github.sha }}
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-restaurant:latest
-
-    - name: Build and push Driver Service
-      uses: docker/build-push-action@v5
-      with:
-        context: ./packages/driver-service
-        push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-driver:${{ github.sha }}
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-driver:latest
-
-    - name: Build and push Order Service
-      uses: docker/build-push-action@v5
-      with:
-        context: ./packages/order-service
-        push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-order:${{ github.sha }}
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-order:latest
-
-    - name: Build and push Frontend
-      uses: docker/build-push-action@v5
-      with:
-        context: ./packages/frontend
-        push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-frontend:${{ github.sha }}
-          ${{ secrets.DOCKER_USERNAME }}/food-delivery-frontend:latest
+  # TODO: Enable when Docker Hub secrets are configured
+  # build-and-push:
+  #   needs: lint-and-test
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+  #
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #
+  #   - name: Set up Docker Buildx
+  #     uses: docker/setup-buildx-action@v3
+  #
+  #   - name: Login to Docker Hub
+  #     uses: docker/login-action@v3
+  #     with:
+  #       username: ${{ secrets.DOCKER_USERNAME }}
+  #       password: ${{ secrets.DOCKER_PASSWORD }}
+  #
+  #   - name: Build and push services
+  #     uses: docker/build-push-action@v5
+  #     strategy:
+  #       matrix:
+  #         service: [customer-service, restaurant-service, driver-service, order-service, frontend]
+  #     with:
+  #       context: ./packages/${{ matrix.service }}
+  #       push: true
+  #       tags: |
+  #         ${{ secrets.DOCKER_USERNAME }}/food-delivery-${{ matrix.service }}:${{ github.sha }}
+  #         ${{ secrets.DOCKER_USERNAME }}/food-delivery-${{ matrix.service }}:latest
