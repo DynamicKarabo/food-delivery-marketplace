@@ -45,10 +45,16 @@ export const confirmPayment = async (req: Request, res: Response) => {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status === 'succeeded') {
-      await prisma.order.update({
-        where: { paymentIntentId },
-        data: { paymentStatus: 'PAID' }
+      const order = await prisma.order.findFirst({
+        where: { paymentIntentId }
       });
+      
+      if (order) {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { paymentStatus: 'PAID' }
+        });
+      }
 
       res.json({ success: true, message: 'Payment confirmed' });
     } else {

@@ -8,7 +8,7 @@ import { MenuItem } from '../types'
 
 export const RestaurantDetail = () => {
   const { id } = useParams<{ id: string }>()
-  const addToCart = useCartStore((state) => state.addToCart)
+  const addItem = useCartStore((state) => state.addItem)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
 
   const { data: restaurant, isLoading } = useQuery(['restaurant', id], async () => {

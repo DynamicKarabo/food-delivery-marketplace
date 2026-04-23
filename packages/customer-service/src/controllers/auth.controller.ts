@@ -208,17 +208,17 @@ export const logout = async (req: Request, res: Response) => {
 };
 
 function generateTokens(userId: string, email: string, role: string) {
-  const accessToken = jwt.sign(
-    { userId, email, role },
-    JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
-  );
+    const accessToken = jwt.sign(
+      { userId, email, role },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] }
+    );
 
-  const refreshToken = jwt.sign(
-    { userId, type: 'refresh' },
-    REFRESH_SECRET,
-    { expiresIn: '30d' }
-  );
+    const refreshToken = jwt.sign(
+      { userId, type: 'refresh' },
+      REFRESH_SECRET,
+      { expiresIn: '30d' }
+    );
 
   return {
     accessToken,

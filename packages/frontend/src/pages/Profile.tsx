@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { User, Mail, Phone, MapPin, Heart, Star } from 'lucide-react'
+import { User, Mail, MapPin, Heart } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 
 export const Profile = () => {
