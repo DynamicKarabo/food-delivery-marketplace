@@ -5,9 +5,16 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || 'refresh-secret';
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+if (!REFRESH_SECRET) {
+  throw new Error('REFRESH_SECRET environment variable is required');
+}
 
 export const register = async (req: Request, res: Response) => {
   try {
