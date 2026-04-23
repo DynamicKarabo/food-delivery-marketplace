@@ -5,9 +5,9 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET as string;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
-const REFRESH_SECRET = process.env.REFRESH_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET as string;
 
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
@@ -71,7 +71,6 @@ export const register = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
     res.status(500).json({
       success: false,
       error: 'Registration failed'
@@ -131,7 +130,6 @@ export const login = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       error: 'Login failed'
@@ -183,7 +181,6 @@ export const refreshToken = async (req: Request, res: Response) => {
       data: { tokens }
     });
   } catch (error) {
-    console.error('Token refresh error:', error);
     res.status(500).json({
       success: false,
       error: 'Token refresh failed'
@@ -206,7 +203,6 @@ export const logout = async (req: Request, res: Response) => {
       message: 'Logged out successfully'
     });
   } catch (error) {
-    console.error('Logout error:', error);
     res.status(500).json({
       success: false,
       error: 'Logout failed'

@@ -59,3 +59,75 @@ export const createReview = async (req: AuthenticatedRequest, res: Response) => 
     });
   }
 };
+
+export const updateReview = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+
+    if (rating !== undefined && (rating < 1 || rating > 5)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Rating must be between 1 and 5'
+      });
+    }
+
+    const review = await prisma.review.updateMany({
+      where: { id, userId },
+      data: {
+        ...(rating !== undefined && { rating }),
+        ...(comment !== undefined && { comment })
+      }
+    });
+
+    if (review.count === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Review not found'
+      });
+    }
+
+    const updatedReview = await prisma.review.findUnique({
+      where: { id }
+    });
+
+    res.json({
+      success: true,
+      data: updatedReview
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update review'
+    });
+  }
+};
+
+export const deleteReview = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { id } = req.params;
+
+    const review = await prisma.review.deleteMany({
+      where: { id, userId }
+    });
+
+    if (review.count === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Review not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Review deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete review'
+    });
+  }
+};
