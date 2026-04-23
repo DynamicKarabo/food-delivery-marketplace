@@ -30,7 +30,7 @@ export const RestaurantDetail = () => {
 
   const handleAddToCart = (item: MenuItem) => {
     const qty = quantities[item.id] || 1
-    addToCart(
+    addItem(
       {
         menuItemId: item.id,
         menuItemName: item.name,
