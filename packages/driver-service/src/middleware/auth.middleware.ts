@@ -1,8 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -19,7 +16,7 @@ export const authenticate = async (
 ) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader?.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
@@ -29,28 +26,16 @@ export const authenticate = async (
 
     const token = authHeader.substring(7);
     const secret = process.env.JWT_SECRET;
-    
+
     if (!secret) {
       throw new Error('JWT_SECRET environment variable is required');
     }
-    
+
     const decoded = jwt.verify(token, secret) as {
       userId: string;
       email: string;
       role: string;
     };
-
-    // Verify user still exists and is active
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId, isActive: true }
-    });
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: 'User not found or inactive'
-      });
-    }
 
     req.user = {
       id: decoded.userId,
