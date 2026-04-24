@@ -4,10 +4,9 @@ import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
-const REFRESH_SECRET = process.env.REFRESH_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET!;
 
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
