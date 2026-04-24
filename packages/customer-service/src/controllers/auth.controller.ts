@@ -70,7 +70,6 @@ export const register = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
     res.status(500).json({
       success: false,
       error: 'Registration failed'
@@ -130,7 +129,6 @@ export const login = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       error: 'Login failed'
@@ -182,7 +180,6 @@ export const refreshToken = async (req: Request, res: Response) => {
       data: { tokens }
     });
   } catch (error) {
-    console.error('Token refresh error:', error);
     res.status(500).json({
       success: false,
       error: 'Token refresh failed'
@@ -205,7 +202,6 @@ export const logout = async (req: Request, res: Response) => {
       message: 'Logged out successfully'
     });
   } catch (error) {
-    console.error('Logout error:', error);
     res.status(500).json({
       success: false,
       error: 'Logout failed'
