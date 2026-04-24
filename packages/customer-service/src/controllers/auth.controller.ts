@@ -213,7 +213,7 @@ function generateTokens(userId: string, email: string, role: string) {
     const accessToken = jwt.sign(
       { userId, email, role },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] }
+      { expiresIn: '7d' }
     );
 
     const refreshToken = jwt.sign(
