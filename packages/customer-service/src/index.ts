@@ -37,8 +37,10 @@ app.use('/health', healthRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Customer Service running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Customer Service running on port ${PORT}`);
+  });
+}
 
 export { app };
